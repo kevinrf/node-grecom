@@ -1,0 +1,17 @@
+{
+  "name": "grecom",
+  "version": "0.1.0",
+  "description": "Library to communicate with the GRECOM family of radio receivers via the USB PC/IF cable accessory.",
+  "main": "grecom.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "radio",
+    "scanner"
+  ],
+  "license": "MPL-2.0",
+  "engines": {
+    "node": ">=5.10.1 < 6"
+  }
+}
