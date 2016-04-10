@@ -1,6 +1,7 @@
 "use strict";
 const STX = 2;
 const ETX = 3;
+var serialPort = require("serialport")
 
 class grecom {
   static about() {
@@ -13,6 +14,18 @@ class grecom {
     data.push(bytesum);
     data.unshift(STX);
     return data;
+  }
+
+  constructor(path) {
+    this._port = new serialPort.SerialPort(path, { baudrate: 115200 })
+    this._port.on("data", data => console.log("Received data from radio:" + data));
+  }
+
+  write(command, payload) {
+    payload.unshift(command);
+    var data = Grecom.pack(payload);
+    console.log(`Sending data to radio: ${data}`);
+    this._port.write(data);
   }
 }
 
