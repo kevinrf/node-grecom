@@ -4,7 +4,10 @@
   "description": "Library to communicate with the GRECOM family of radio receivers via the USB PC/IF cable accessory.",
   "main": "grecom.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jasmine"
+  },
+  "devDependencies": {
+    "jasmine": "^2.4.1"
   },
   "keywords": [
     "radio",
