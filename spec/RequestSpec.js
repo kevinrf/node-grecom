@@ -16,4 +16,8 @@ describe ("pack()", () => {
     expect(Request.pack([15, 30, 40]).slice(-1).pop()).toEqual(88);
     expect(Request.pack([75,32]).slice(-1).pop()).toEqual(110);
   });
+
+  it("uses the lowest order byte of the sum when the actual is > 0xFF", () => {
+    expect(Request.pack([0xF0, 100, 20]).slice(-1).pop()).toEqual(107);
+  });
 });
