@@ -1,6 +1,7 @@
 "use strict";
 
 var Session = require("../lib/session");
+var Request = require("../lib/request")
 var constants = require("../lib/constants");
 
 describe("#write", () => {
