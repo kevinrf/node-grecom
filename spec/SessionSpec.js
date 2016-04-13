@@ -6,6 +6,7 @@ var constants = require("../lib/constants");
 
 describe("#write", () => {
   let session = new Session("/dev/tty.test", {connect: false});
+
   it("sends request data to the serial port", () => {
     let request = new Request([7,8,9]);
     spyOn(session._port, 'write');
@@ -16,6 +17,7 @@ describe("#write", () => {
 
 describe ("#keyPress", () => {
   let session = new Session("/dev/tty.test", {connect: false});
+
   it ("writes a request with the send key command byte", () => {
     spyOn(session, 'write');
     session.sendKey(constants.key.LIGHT);
@@ -31,5 +33,14 @@ describe ("#keyPress", () => {
     expect(session.write).toHaveBeenCalled();
     let request = session.write.calls.argsFor(0)[0];
     expect(request.messageData).toEqual([key]);
+  });
+});
+
+describe ("#queueForResponse", () => {
+  let session = new Session("/dev/tty.test", {connect: false});
+
+  it ("executes the callback when a matching response is received", (done) => {
+    session.queueForResponse(10, (bytes) => { done() });
+    session._handleResponse(new Buffer([2, 10, 5, 5, 3, 23]));
   });
 });
