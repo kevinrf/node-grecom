@@ -38,6 +38,32 @@ describe("Session", () => {
     });
   });
 
+  describe ("#getLcd", () => {
+    let session
+    beforeEach(() => {
+      session = new Session("/dev/null", {connect: false});
+    });
+
+    it("sends a get lcd command message", () => {
+      spyOn(session, 'write');
+      session.getLcd();
+      expect(session.write).toHaveBeenCalled();
+      let request = session.write.calls.argsFor(0)[0];
+      expect(request.command).toEqual(constants.command.GET_LCD);
+    });
+
+    it("executes the callback when the lcd state is received", (done) => {
+      spyOn(session, 'write');
+      let bytes = new Buffer(70);
+      bytes[0] = 2;
+      bytes[1] = constants.command.GET_LCD;
+      bytes[68] = 3;
+      session.queueForResponse(constants.command.GET_LCD, (bytes) => { done() });
+      session.getLcd();
+      session._receiveData(bytes);
+    });
+  });
+
   describe ("#queueForResponse", () => {
     it ("executes the callback when a matching response is received", (done) => {
       session.queueForResponse(10, (bytes) => { done() });
