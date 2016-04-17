@@ -66,6 +66,24 @@ describe("Session", () => {
     });
   });
 
+  describe ("#getStatus", () => {
+    it("sends a status command message", () => {
+      spyOn(session, 'write');
+      session.getStatus();
+      expect(session.write).toHaveBeenCalled();
+      let request = session.write.calls.argsFor(0)[0];
+      expect(request.command).toEqual(constants.command.STATUS);
+    });
+
+    it("executes the callback when the device status is received", (done) => {
+      spyOn(session, 'write');
+      let bytes = new Buffer([0x02, 0x41, 0x00, 0x00, 0xf4, 0x01, 0x42, 0x02,
+        0xb9, 0x01, 0x70, 0xdd, 0xb1, 0xf8, 0xad, 0xc9, 0x08, 0x01, 0x03, 0xac]);
+      session.getStatus((status) => { done() });
+      session._receiveData(bytes);
+    });
+  });
+
   describe ("#queueForResponse", () => {
     it ("executes the callback when a matching response is received", (done) => {
       session.queueForResponse(10, (bytes) => { done() });
