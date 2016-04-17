@@ -55,9 +55,11 @@ describe("Session", () => {
     it("executes the callback when the lcd state is received", (done) => {
       spyOn(session, 'write');
       let bytes = new Buffer(70);
+      bytes.fill(0x00);
       bytes[0] = 2;
       bytes[1] = constants.command.GET_LCD;
       bytes[68] = 3;
+      bytes[69] = constants.command.GET_LCD + 3;
       session.queueForResponse(constants.command.GET_LCD, (bytes) => { done() });
       session.getLcd();
       session._receiveData(bytes);
