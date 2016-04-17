@@ -15,11 +15,11 @@ describe("bytesum()", () => {
 
 describe("pack()", () => {
   it("prepends the STX byte", () => {
-    expect(Util.pack([7,8,9])[0]).toEqual(0x02);
+    expect(Util.pack([7, 8, 9])[0]).toEqual(0x02);
   });
 
   it("appends the ETX byte at the penultimate position", () => {
-    expect(Util.pack([10,15,23]).slice(-2, -1).pop()).toEqual(0x03);
+    expect(Util.pack([10, 15, 23]).slice(-2, -1).pop()).toEqual(0x03);
   });
 
   it("appends the byte sum at the final position", () => {
@@ -36,5 +36,5 @@ describe("findMessageInBuffer()", () => {
   it("distinguishes between a data byte of 0x03 and the actual ETX", () => {
     let bytes = [0x02, 0x55, 0x25, 0x03, 0x20, 0x03, 0xA0, 0x02, 0x51, 0x20];
     expect(Util.findMessageInBuffer(new Buffer(bytes))).toEqual(6);
-  })
-})
+  });
+});
