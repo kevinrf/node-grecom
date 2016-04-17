@@ -1,23 +1,14 @@
 "use strict";
-
 var Request = require("../lib/request");
 
-describe ("pack()", () => {
-  it("prepends the STX byte", () => {
-    expect(Request.pack([7,8,9])[0]).toEqual(0x02);
+describe("#constructor", () => {
+  it("prepares a request message for a command with no message data", () => {
+    let request = new Request(0x41);
+    expect(request.bytes).toEqual([0x02, 0x41, 0x03, 0x44]);
   });
 
-  it("appends the ETX byte at the penultimate position", () => {
-    expect(Request.pack([10,15,23]).slice(-2, -1).pop()).toEqual(0x03);
+  it ("prepares a request message for a command with message data", () => {
+    let request = new Request(0x4B, [0x20]);
+    expect(request.bytes).toEqual([0x02, 0x4B, 0x20, 0x03, 0x6E]);
   });
-
-  it("appends the byte sum at the final position", () => {
-    // ETX is included; STX is not.
-    expect(Request.pack([15, 30, 40]).slice(-1).pop()).toEqual(88);
-    expect(Request.pack([75,32]).slice(-1).pop()).toEqual(110);
-  });
-
-  it("uses the lowest order byte of the sum when the actual is > 0xFF", () => {
-    expect(Request.pack([0xF0, 100, 20]).slice(-1).pop()).toEqual(107);
-  });
-});
+})
