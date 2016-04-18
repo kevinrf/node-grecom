@@ -85,4 +85,34 @@ describe("Session", () => {
       session._handleResponse(new Buffer([2, 10, 5, 5, 3, 23]));
     });
   });
+
+  describe("#tune", () => {
+    it("sends a tune command message", () => {
+      spyOn(session, 'write');
+      session.tune("123.456", 0);
+      expect(session.write).toHaveBeenCalled();
+      let request = session.write.calls.argsFor(0)[0];
+      expect(request.command).toEqual(constants.command.TUNE);
+    });
+
+    it("sends the frequency as a 32-bit little-endian integer", () => {
+      spyOn(session, 'write');
+      session.tune("123.456", 1);
+      expect(session.write).toHaveBeenCalled();
+      let request = session.write.calls.argsFor(0)[0];
+      expect(request.messageData[0]).toEqual(0x00);
+      expect(request.messageData[1]).toEqual(0xCA);
+      expect(request.messageData[2]).toEqual(0x5B);
+      expect(request.messageData[3]).toEqual(0x07);
+    });
+
+    it("sends the rxmode", () => {
+      spyOn(session, 'write');
+      var rxMode = 0;
+      session.tune("123.456", rxMode);
+      expect(session.write).toHaveBeenCalled();
+      let request = session.write.calls.argsFor(0)[0];
+      expect(request.messageData[4]).toEqual(rxMode);
+    });
+  });
 });
