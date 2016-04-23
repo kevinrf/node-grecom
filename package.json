@@ -1,6 +1,6 @@
 {
   "name": "grecom",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Library to communicate with the GRECOM family of radio receivers via the USB PC/IF cable accessory.",
   "main": "grecom.js",
   "repository": {
