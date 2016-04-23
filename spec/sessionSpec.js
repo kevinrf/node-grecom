@@ -1,7 +1,6 @@
 "use strict";
 
 var Session = require("../lib/session");
-var Request = require("../lib/request");
 var constants = require("../lib/constants");
 
 describe("Session", () => {
@@ -10,45 +9,50 @@ describe("Session", () => {
     session = new Session("/dev/null", {connect: false});
   });
 
-  describe("#write", () => {
-    it("sends request data to the serial port", () => {
-      let request = new Request([7, 8, 9]);
-      spyOn(session._port, 'write');
-      session.write(request);
-      expect(session._port.write).toHaveBeenCalledWith(request.bytes);
+  describe("#writeCommand", () => {
+    it("sends a request message for a command", () => {
+      spyOn(session.port, 'write');
+      session.writeCommand(0x41);
+      expect(session.port.write).toHaveBeenCalledWith([0x02, 0x41, 0x03, 0x44]);
+    });
+
+    it("sends a request message for a command with message data", () => {
+      spyOn(session.port, 'write');
+      session.writeCommand(0x4B, 0x20);
+      expect(session.port.write).toHaveBeenCalledWith([0x02, 0x4B, 0x20, 0x03,
+        0x6E]);
     });
   });
 
   describe("#sendKey", () => {
     it("writes a request with the send key command byte", () => {
-      spyOn(session, 'write');
+      spyOn(session, 'writeCommand');
+      let cmd = constants.command.SEND_KEY;
       session.sendKey(constants.key.LIGHT);
-      expect(session.write).toHaveBeenCalled();
-      let request = session.write.calls.argsFor(0)[0];
-      expect(request.command).toEqual(constants.command.SEND_KEY);
+      expect(session.writeCommand).toHaveBeenCalled();
+      expect(session.writeCommand.calls.argsFor(0)[0]).toEqual(cmd);
     });
 
     it("writes a request with the key value as payload", () => {
-      spyOn(session, 'write');
+      spyOn(session, 'writeCommand');
       let key = constants.key.LIGHT;
       session.sendKey(key);
-      expect(session.write).toHaveBeenCalled();
-      let request = session.write.calls.argsFor(0)[0];
-      expect(request.messageData).toEqual([key]);
+      expect(session.writeCommand).toHaveBeenCalled();
+      expect(session.writeCommand.calls.argsFor(0)[1]).toEqual(key);
     });
   });
 
   describe("#getLcd", () => {
     it("sends a get lcd command message", () => {
-      spyOn(session, 'write');
+      spyOn(session, 'writeCommand');
+      let cmd = constants.command.GET_LCD;
       session.getLcd();
-      expect(session.write).toHaveBeenCalled();
-      let request = session.write.calls.argsFor(0)[0];
-      expect(request.command).toEqual(constants.command.GET_LCD);
+      expect(session.writeCommand).toHaveBeenCalled();
+      expect(session.writeCommand.calls.argsFor(0)[0]).toEqual(cmd);
     });
 
     it("executes the callback when the lcd state is received", done => {
-      spyOn(session, 'write');
+      spyOn(session, 'writeCommand');
       let bytes = new Buffer(70);
       bytes.fill(0x00);
       bytes[0] = 2;
@@ -63,15 +67,15 @@ describe("Session", () => {
 
   describe("#getStatus", () => {
     it("sends a status command message", () => {
-      spyOn(session, 'write');
+      spyOn(session, 'writeCommand');
+      let cmd = constants.command.STATUS;
       session.getStatus();
-      expect(session.write).toHaveBeenCalled();
-      let request = session.write.calls.argsFor(0)[0];
-      expect(request.command).toEqual(constants.command.STATUS);
+      expect(session.writeCommand).toHaveBeenCalled();
+      expect(session.writeCommand.calls.argsFor(0)[0]).toEqual(cmd);
     });
 
     it("executes the callback when the device status is received", done => {
-      spyOn(session, 'write');
+      spyOn(session, 'writeCommand');
       let data = [0x02, 0x41, 0x00, 0x00, 0xf4, 0x01, 0x42, 0x02, 0xb9, 0x01,
         0x70, 0xdd, 0xb1, 0xf8, 0xad, 0xc9, 0x08, 0x01, 0x03, 0xac];
       session.getStatus(() => done());
@@ -88,31 +92,30 @@ describe("Session", () => {
 
   describe("#tune", () => {
     it("sends a tune command message", () => {
-      spyOn(session, 'write');
+      spyOn(session, 'writeCommand');
+      let cmd = constants.command.TUNE;
       session.tune("123.456", 0);
-      expect(session.write).toHaveBeenCalled();
-      let request = session.write.calls.argsFor(0)[0];
-      expect(request.command).toEqual(constants.command.TUNE);
+      expect(session.writeCommand).toHaveBeenCalled();
+      expect(session.writeCommand.calls.argsFor(0)[0]).toEqual(cmd);
     });
 
     it("sends the frequency as a 32-bit little-endian integer", () => {
-      spyOn(session, 'write');
+      spyOn(session, 'writeCommand');
       session.tune("123.456", 1);
-      expect(session.write).toHaveBeenCalled();
-      let request = session.write.calls.argsFor(0)[0];
-      expect(request.messageData[0]).toEqual(0x00);
-      expect(request.messageData[1]).toEqual(0xCA);
-      expect(request.messageData[2]).toEqual(0x5B);
-      expect(request.messageData[3]).toEqual(0x07);
+      expect(session.writeCommand).toHaveBeenCalled();
+      let payload = session.writeCommand.calls.argsFor(0)[1];
+      expect(payload[0]).toEqual(0x00);
+      expect(payload[1]).toEqual(0xCA);
+      expect(payload[2]).toEqual(0x5B);
+      expect(payload[3]).toEqual(0x07);
     });
 
     it("sends the rxmode", () => {
-      spyOn(session, 'write');
+      spyOn(session, 'writeCommand');
       var rxMode = 0;
       session.tune("123.456", rxMode);
-      expect(session.write).toHaveBeenCalled();
-      let request = session.write.calls.argsFor(0)[0];
-      expect(request.messageData[4]).toEqual(rxMode);
+      expect(session.writeCommand).toHaveBeenCalled();
+      expect(session.writeCommand.calls.argsFor(0)[1][4]).toEqual(rxMode);
     });
   });
 });
