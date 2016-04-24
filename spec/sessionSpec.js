@@ -118,4 +118,54 @@ describe("Session", () => {
       expect(session.writeCommand.calls.argsFor(0)[1][4]).toEqual(rxMode);
     });
   });
+
+  describe("#download", () => {
+    beforeEach(() => {
+      jasmine.clock().install();
+    });
+
+    afterEach(() => {
+      jasmine.clock().uninstall();
+    });
+
+    it("sends the download command", () => {
+      spyOn(session, 'writeCommand');
+      session.download();
+      expect(session.writeCommand).toHaveBeenCalled();
+      expect(session.writeCommand.calls.argsFor(0)).toEqual([0x50, 0x01]);
+    });
+
+    it("sends the transfer initiation byte after the download command", () => {
+      spyOn(session, 'write');
+      session.download();
+      expect(session.write.calls.count()).toEqual(1);
+      jasmine.clock().tick(501);
+      expect(session.write.calls.count()).toEqual(2);
+      expect(session.write.calls.argsFor(1)).toEqual([0x45]);
+    });
+
+    it("calls the callback function after receiving 67452 bytes", done => {
+      spyOn(session, 'write');
+      session.download(data => {
+        expect(data.length).toEqual(67452);
+        done();
+      });
+      jasmine.clock().tick(501);
+      session._receiveData(new Buffer(67451));
+      session._receiveData(new Buffer(1));
+    });
+
+    it("resumes usual parsing of received data after the transfer", done => {
+      spyOn(session, 'write');
+      session.download();
+      jasmine.clock().tick(501);
+      session._receiveData(new Buffer(67451));
+      session._receiveData(new Buffer(1));
+      spyOn(session, 'writeCommand');
+      let nextData = [0x02, 0x41, 0x00, 0x00, 0xf4, 0x01, 0x42, 0x02, 0xb9,
+        0x01, 0x70, 0xdd, 0xb1, 0xf8, 0xad, 0xc9, 0x08, 0x01, 0x03, 0xac];
+      session.getStatus(() => done());
+      session._receiveData(new Buffer(nextData));
+    });
+  });
 });
