@@ -13,14 +13,16 @@ describe("Session", () => {
     it("sends a request message for a command", () => {
       spyOn(session.port, 'write');
       session.writeCommand(0x41);
-      expect(session.port.write).toHaveBeenCalledWith([0x02, 0x41, 0x03, 0x44]);
+      expect(session.port.write).toHaveBeenCalled();
+      expect(session.port.write.calls.argsFor(0)[0]).toEqual([0x02, 0x41, 0x03,
+        0x44]);
     });
 
     it("sends a request message for a command with message data", () => {
       spyOn(session.port, 'write');
       session.writeCommand(0x4B, 0x20);
-      expect(session.port.write).toHaveBeenCalledWith([0x02, 0x4B, 0x20, 0x03,
-        0x6E]);
+      expect(session.port.write.calls.argsFor(0)[0]).toEqual([0x02, 0x4B, 0x20,
+        0x03, 0x6E]);
     });
   });
 
@@ -166,6 +168,57 @@ describe("Session", () => {
         0x01, 0x70, 0xdd, 0xb1, 0xf8, 0xad, 0xc9, 0x08, 0x01, 0x03, 0xac];
       session.getStatus(() => done());
       session._receiveData(new Buffer(nextData));
+    });
+  });
+
+  describe("#upload", () => {
+    beforeEach(() => {
+      jasmine.clock().install();
+    });
+
+    afterEach(() => {
+      jasmine.clock().uninstall();
+    });
+
+    it("sends the upload command", () => {
+      spyOn(session, 'writeCommand');
+      session.upload();
+      expect(session.writeCommand).toHaveBeenCalled();
+      expect(session.writeCommand.calls.argsFor(0)).toEqual([0x50, 0x03]);
+    });
+
+    it("waits for the transfer initiation byte before sending data", done => {
+      let requestReceived = false;
+      let transferInitiated = false;
+      let txInitiateStub = () => {
+        expect(session.write.calls.count()).toEqual(1);
+        transferInitiated = true;
+        session._receiveData(new Buffer([0x45]));
+      };
+      spyOn(session, 'write').and.callFake(() => {
+        if (!requestReceived) {
+          requestReceived = true;
+          setTimeout(txInitiateStub, 100);
+          jasmine.clock().tick(101);
+        } else if (transferInitiated) {
+          done();
+        }
+      });
+      session.upload();
+    });
+
+    it("calls the callback function when the transfer is over", done => {
+      session.port = jasmine.createSpyObj('port', ["write"]);
+      session.port.drain = jasmine.createSpy('drain').and.callFake(cb => {
+        if (cb) {
+          cb(null, 1);
+        }
+      });
+      session.port.write = jasmine.createSpy('write').and.callFake((b, cb) => {
+        cb(null, b.length);
+      });
+      session.upload(new Buffer(67452), () => done());
+      session._receiveData(new Buffer([0x45]));
     });
   });
 });
