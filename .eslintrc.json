@@ -4,8 +4,9 @@
         "sourceType": "script"
     },
     "env": {
+      "es6": true,
       "node": true,
       "jasmine": true
     },
-    "extends": "google"
+    "extends": "eslint:recommended"
 }
