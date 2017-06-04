@@ -136,16 +136,16 @@ describe("Session", () => {
       spyOn(session, 'writeCommand');
       session.download();
       expect(session.writeCommand).toHaveBeenCalled();
-      expect(session.writeCommand.calls.argsFor(0)).toEqual([0x50, 0x01]);
+      expect(session.writeCommand.calls.argsFor(0)).toEqual([0x43, 0x00]);
     });
 
     it("sends the transfer initiation byte after the download command", () => {
-      spyOn(session, 'write');
+      spyOn(session, 'writeCommand');
       session.download();
-      expect(session.write.calls.count()).toEqual(1);
+      let callCount = session.writeCommand.calls.count();
       jasmine.clock().tick(501);
-      expect(session.write.calls.count()).toEqual(2);
-      expect(session.write.calls.argsFor(1)).toEqual([0x45]);
+      expect(session.writeCommand.calls.count()).toEqual(callCount + 1);
+      expect(session.writeCommand.calls.argsFor(2)).toEqual([0x45]);
     });
 
     it("calls the callback function after receiving 67452 bytes", done => {
