@@ -11,6 +11,10 @@ describe("bytesum()", () => {
   it("returns only the lowest order byte when greater than 0xFF", () => {
     expect(Util.bytesum([2, 0xF0, 100, 20, 3])).toEqual(107);
   });
+
+  it("returns zero for an empty buffer", ()=> {
+    expect(Util.bytesum([])).toEqual(0);
+  });
 });
 
 describe("pack()", () => {
