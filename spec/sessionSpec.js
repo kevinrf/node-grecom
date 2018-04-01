@@ -6,7 +6,7 @@ var constants = require("../lib/constants");
 describe("Session", () => {
   var session;
   beforeEach(() => {
-    let port = jasmine.createSpyObj('serialport', ['on']);
+    let port = jasmine.createSpyObj('serialport', ['read']);
     port.write = () => {};
     session = new Session(port);
   });
