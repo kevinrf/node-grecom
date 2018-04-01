@@ -12,7 +12,7 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "serialport": "4.0.x"
+    "serialport": "6.1.x"
   },
   "devDependencies": {
     "jasmine": "^2.4.1",
