@@ -2,10 +2,10 @@
 
 module.exports = {
   command: {
-    STATUS: "A".charCodeAt(),
-    GET_LCD: "L".charCodeAt(),
-    SEND_KEY: "K".charCodeAt(),
-    TUNE: "T".charCodeAt(),
+    STATUS: "A".charCodeAt(0),
+    GET_LCD: "L".charCodeAt(0),
+    SEND_KEY: "K".charCodeAt(0),
+    TUNE: "T".charCodeAt(0),
   },
   key: {
     F1: 31,

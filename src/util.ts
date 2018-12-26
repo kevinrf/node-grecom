@@ -8,12 +8,12 @@
  * Start-of-transmission byte value
  * @memberof Util
  */
-const STX = 2;
+const STX = 0x02;
 /**
  * End-of-transmission byte value
  * @memberof Util
  */
-const ETX = 3;
+const ETX = 0x03;
 
 /**
  * Calculate the sum of bytes in a message. This is used as a checksum in the
@@ -26,8 +26,8 @@ const ETX = 3;
  * @param {(number[]|Buffer)} bytes - The message.
  * @return {number} The byte sum value.
  */
-function bytesum(bytes) {
-  var sum = bytes.slice(1).reduce((x, y) => x + y, 0);
+function bytesum(bytes: Buffer): number {
+  let sum = bytes.slice(1).reduce((x, y) => x + y, 0);
   sum &= 0xFF;
   return sum;
 }
@@ -41,10 +41,10 @@ function bytesum(bytes) {
  * position. Message data in the 1..(data.length-1) positions.
  * @return {number[]} The enclosed bytes ready for transmission.
  */
-function pack(bytes) {
+function pack(bytes: number[]): number[] {
   bytes.unshift(STX);
   bytes.push(ETX);
-  var sum = bytesum(bytes);
+  let sum = bytesum(Buffer.from(bytes));
   bytes.push(sum);
   return bytes;
 }
@@ -60,11 +60,11 @@ function pack(bytes) {
  * @return {number} The index of the end of the message (the checksum byte) if a
  * message is found.
  */
-function findMessageInBuffer(bytes) {
+function findMessageInBuffer(bytes: Buffer): number | null {
   if (bytes[0] === STX) {
     if (bytes.includes(ETX)) {
       let candidateEtx = 0;
-      let sum;
+      let sum = 0;
       do {
         candidateEtx = bytes.indexOf(ETX, candidateEtx + 1);
         sum = bytesum(bytes.slice(0, candidateEtx + 1));
@@ -84,27 +84,48 @@ function findMessageInBuffer(bytes) {
  * @param {Buffer} bytes - The status response received from the device.
  * @return {Object} status - An object with the status values parsed.
  */
-function parseStatus(bytes) {
-  var status = {};
-  status.mode = bytes[2];
-  var sq = bytes[3];
-  status.squelchRf = (sq & 1) > 0;
-  status.unmuted = (sq & 2) > 0;
-  status.squelchXf = (sq & 4) > 0;
-  status.squelchHd2 = (sq & 8) > 0;
-  status.squelchHd5 = (sq & 16) > 0;
-  status.mobile = (sq & 32) > 0;
-  status.backlightDim = (sq & 64) > 0;
-  status.batteryLevel = bytes[4] + (bytes[5] << 8);
-  status.charging = (bytes[5] & 0x80) > 0;
-  status.rssi = bytes[6] + (bytes[7] << 8);
-  status.zm = bytes[8] + (bytes[9] << 8);
-  status.ledR = bytes[10];
-  status.ledG = bytes[11];
-  status.ledB = bytes[12];
-  status.frequency = (bytes.readInt32LE(13) * 0.000001).toString();
-  status.rxmode = bytes[17];
+function parseStatus(bytes: Buffer): Status {
+  const sq = bytes[3];
+  const status: Status = {
+    mode: bytes[2],
+    squelchRf: (sq & 1) > 0,
+    unmuted: (sq & 2) > 0,
+    squelchXf: (sq & 4) > 0,
+    squelchHd2: (sq & 8) > 0,
+    squelchHd5: (sq & 16) > 0,
+    mobile: (sq & 32) > 0,
+    backlightDim: (sq & 64) > 0,
+    batteryLevel: bytes[4] + (bytes[5] << 8),
+    charging: (bytes[5] & 0x80) > 0,
+    rssi: bytes[6] + (bytes[7] << 8),
+    zm: bytes[8] + (bytes[9] << 8),
+    ledR: bytes[10],
+    ledG: bytes[11],
+    ledB: bytes[12],
+    frequency: (bytes.readInt32LE(13) * 0.000001).toString(),
+    rxmode: bytes[17],
+  };
   return status;
+}
+
+interface Status {
+  mode: number;
+  squelchRf: boolean;
+  unmuted: boolean;
+  squelchXf: boolean;
+  squelchHd2: boolean;
+  squelchHd5: boolean;
+  mobile: boolean;
+  backlightDim: boolean;
+  batteryLevel: number;
+  charging: boolean;
+  rssi: number;
+  zm: number;
+  ledR: number;
+  ledG: number;
+  ledB: number;
+  frequency: string;
+  rxmode: number;
 }
 
 module.exports = {

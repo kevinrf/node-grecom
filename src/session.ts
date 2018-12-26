@@ -3,17 +3,26 @@
 var constants = require("./constants");
 var Lcd = require("./lcd");
 var Util = require("./util");
+var serialport = require("serialport");
 
 /**
  * An attached radio. Wraps a serial port connection with a specialized
  * interface for the PC/IF protocol.
  */
 class Session {
+  port: any;
+  private _callbackQueues: Map<any, any>;
+  private _inBuffer: Buffer;
+  private _bufferHandler: () => void;
+  private _downloadCallback: (data: Buffer) => void;
+  private _uploadCallback: any;
+  private _uploadData: any;
+  
   /**
    * Wrap a serial port connection to an attached radio device.
    * @param {serialport.SerialPort} port - An open connection to the radio.
    */
-  constructor(port) {
+  constructor(port: any) {
     this._callbackQueues = new Map();
     this.port = port;
 
@@ -31,7 +40,7 @@ class Session {
    * @param {Session~writeCallback} callback - Callback to execute when the
    * write completes.
    */
-  write(bytes, callback) {
+  write(bytes: Buffer, callback?: (error: any, bytesWritten: number) => void) {
     this.port.write(bytes, (error, bytesWritten) => {
       this.port.drain(() => {
         if (callback instanceof Function) {
@@ -52,7 +61,7 @@ class Session {
    * @param {Number|Number[]} [payload] - Optional message data. This is
    * typically used to specify parameters of the issued command.
    */
-  writeCommand(command, payload) {
+  writeCommand(command: number, payload?: number|number[]) {
     if (!Array.isArray(payload)) {
       payload = payload ? [payload] : [];
     }
@@ -145,7 +154,7 @@ class Session {
 
   _writeIntToByteArray(int) {
     var buffer = new Buffer(4);
-    buffer.writeInt32LE(int);
+    buffer.writeInt32LE(int, 0)
     var array = [];
     for (let byte of buffer) {
       array.push(byte);

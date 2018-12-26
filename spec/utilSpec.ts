@@ -34,11 +34,11 @@ describe("pack()", () => {
 describe("findMessageInBuffer()", () => {
   it("finds a message and returns the index of the checksum", () => {
     let bytes = [0x02, 0x51, 0x20, 0x20, 0x03, 0x94, 0x02, 0x55, 0x25];
-    expect(Util.findMessageInBuffer(new Buffer(bytes))).toEqual(5);
+    expect(Util.findMessageInBuffer(Buffer.from(bytes))).toEqual(5);
   });
 
   it("distinguishes between a data byte of 0x03 and the actual ETX", () => {
-    let bytes = [0x02, 0x55, 0x25, 0x03, 0x20, 0x03, 0xA0, 0x02, 0x51, 0x20];
-    expect(Util.findMessageInBuffer(new Buffer(bytes))).toEqual(6);
+    const bytes = [0x02, 0x55, 0x25, 0x03, 0x20, 0x03, 0xA0, 0x02, 0x51, 0x20];
+    expect(Util.findMessageInBuffer(Buffer.from(bytes))).toEqual(6);
   });
 });
