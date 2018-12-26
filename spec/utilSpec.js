@@ -1,5 +1,5 @@
 "use strict";
-var Util = require("../lib/util");
+var Util = require("../src/util");
 
 describe("bytesum()", () => {
   it("calculates the sum of a buffer or array of bytes", () => {
