@@ -8,8 +8,7 @@
     "url": "kevinrf/node-grecom"
   },
   "scripts": {
-    "test": "ts-node node_modules/jasmine/bin/jasmine",
-    "lint": "eslint ."
+    "test": "ts-node node_modules/jasmine/bin/jasmine"
   },
   "dependencies": {
     "serialport": "7.1.x"
@@ -18,8 +17,6 @@
     "@types/jasmine": "^3.3.5",
     "@types/node": "^10.12.18",
     "@types/serialport": "^7.0.x",
-    "eslint": "^2.7.0",
-    "eslint-config-google": "^0.5.0",
     "jasmine": "^3.3.x",
     "ts-node": "^7.0.1",
     "typescript": "^3.2.2"
