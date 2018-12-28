@@ -3,7 +3,7 @@ var Util = require("../src/util");
 describe("bytesum()", () => {
   it("calculates the sum of a buffer or array of bytes", () => {
     // ETX is included; STX is not.
-    expect(Util.bytesum(new Buffer([2, 15, 30, 40, 3]))).toEqual(88);
+    expect(Util.bytesum(Buffer.from([2, 15, 30, 40, 3]))).toEqual(88);
     expect(Util.bytesum([2, 75, 32, 3])).toEqual(110);
   });
 

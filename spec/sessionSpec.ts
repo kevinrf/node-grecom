@@ -55,7 +55,7 @@ describe("Session", () => {
 
     it("executes the callback when the lcd state is received", done => {
       spyOn(session, 'writeCommand');
-      let bytes = new Buffer(70);
+      let bytes = Buffer.alloc(70);
       bytes.fill(0x00);
       bytes[0] = 2;
       bytes[1] = constants.command.GET_LCD;
@@ -81,14 +81,14 @@ describe("Session", () => {
       let data = [0x02, 0x41, 0x00, 0x00, 0xf4, 0x01, 0x42, 0x02, 0xb9, 0x01,
         0x70, 0xdd, 0xb1, 0xf8, 0xad, 0xc9, 0x08, 0x01, 0x03, 0xac];
       session.getStatus(() => done());
-      session._receiveData(new Buffer(data));
+      session._receiveData(Buffer.from(data));
     });
   });
 
   describe("#queueForResponse", () => {
     it("executes the callback when a matching response is received", done => {
       session.queueForResponse(10, () => done());
-      session._handleResponse(new Buffer([2, 10, 5, 5, 3, 23]));
+      session._handleResponse(Buffer.from([2, 10, 5, 5, 3, 23]));
     });
   });
 
@@ -153,21 +153,21 @@ describe("Session", () => {
         done();
       });
       jasmine.clock().tick(501);
-      session._receiveData(new Buffer(67451));
-      session._receiveData(new Buffer(1));
+      session._receiveData(Buffer.alloc(67451));
+      session._receiveData(Buffer.alloc(1));
     });
 
     it("resumes usual parsing of received data after the transfer", done => {
       spyOn(session, 'write');
       session.download();
       jasmine.clock().tick(501);
-      session._receiveData(new Buffer(67451));
-      session._receiveData(new Buffer(1));
+      session._receiveData(Buffer.alloc(67451));
+      session._receiveData(Buffer.alloc(1));
       spyOn(session, 'writeCommand');
       let nextData = [0x02, 0x41, 0x00, 0x00, 0xf4, 0x01, 0x42, 0x02, 0xb9,
         0x01, 0x70, 0xdd, 0xb1, 0xf8, 0xad, 0xc9, 0x08, 0x01, 0x03, 0xac];
       session.getStatus(() => done());
-      session._receiveData(new Buffer(nextData));
+      session._receiveData(Buffer.from(nextData));
     });
   });
 
@@ -193,7 +193,7 @@ describe("Session", () => {
       let txInitiateStub = () => {
         expect(session.write.calls.count()).toEqual(1);
         transferInitiated = true;
-        session._receiveData(new Buffer([0x45]));
+        session._receiveData(Buffer.from([0x45]));
       };
       spyOn(session, 'write').and.callFake(() => {
         if (!requestReceived) {
@@ -217,8 +217,8 @@ describe("Session", () => {
       session.port.write = jasmine.createSpy('write').and.callFake((b, cb) => {
         cb(null, b.length);
       });
-      session.upload(new Buffer(67452), () => done());
-      session._receiveData(new Buffer([0x45]));
+      session.upload(Buffer.alloc(67452), () => done());
+      session._receiveData(Buffer.from([0x45]));
     });
   });
 });

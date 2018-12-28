@@ -24,7 +24,7 @@ export default class Session {
     this._callbackQueues = new Map();
     this.port = port;
 
-    this._inBuffer = new Buffer(0);
+    this._inBuffer = Buffer.alloc(0);
     this._bufferHandler = this._remoteControlBufferHandler;
     var session = this;
     this.port.read(bytes => {
@@ -151,7 +151,7 @@ export default class Session {
   }
 
   _writeIntToByteArray(int) {
-    var buffer = new Buffer(4);
+    const buffer = Buffer.alloc(4);
     buffer.writeInt32LE(int, 0)
     var array = [];
     for (let byte of buffer) {
