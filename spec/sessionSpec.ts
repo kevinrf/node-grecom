@@ -1,7 +1,7 @@
 "use strict";
 
-var Session = require("../src/session");
-var constants = require("../src/constants");
+import Session from "../src/session";
+import constants from "../src/constants";
 
 describe("Session", () => {
   var session;

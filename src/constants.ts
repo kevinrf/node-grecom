@@ -1,6 +1,6 @@
 "use strict";
 
-module.exports = {
+export default {
   command: {
     STATUS: "A".charCodeAt(0),
     GET_LCD: "L".charCodeAt(0),

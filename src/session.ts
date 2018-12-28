@@ -1,6 +1,6 @@
 "use strict";
 
-var constants = require("./constants");
+import constants from "./constants";
 var Lcd = require("./lcd");
 var Util = require("./util");
 var serialport = require("serialport");
@@ -9,7 +9,7 @@ var serialport = require("serialport");
  * An attached radio. Wraps a serial port connection with a specialized
  * interface for the PC/IF protocol.
  */
-class Session {
+export default class Session {
   port: any;
   private _callbackQueues: Map<any, any>;
   private _inBuffer: Buffer;
@@ -246,5 +246,3 @@ class Session {
     }
   }
 }
-
-module.exports = Session;
