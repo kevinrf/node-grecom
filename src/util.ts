@@ -26,7 +26,7 @@ const ETX = 0x03;
  * @param {(number[]|Buffer)} bytes - The message.
  * @return {number} The byte sum value.
  */
-function bytesum(bytes: Buffer): number {
+export function bytesum(bytes: Buffer): number {
   let sum = bytes.slice(1).reduce((x, y) => x + y, 0);
   sum &= 0xFF;
   return sum;
@@ -41,7 +41,7 @@ function bytesum(bytes: Buffer): number {
  * position. Message data in the 1..(data.length-1) positions.
  * @return {number[]} The enclosed bytes ready for transmission.
  */
-function pack(bytes: number[]): number[] {
+export function pack(bytes: number[]): number[] {
   bytes.unshift(STX);
   bytes.push(ETX);
   let sum = bytesum(Buffer.from(bytes));
@@ -60,7 +60,7 @@ function pack(bytes: number[]): number[] {
  * @return {number} The index of the end of the message (the checksum byte) if a
  * message is found.
  */
-function findMessageInBuffer(bytes: Buffer): number | null {
+export function findMessageInBuffer(bytes: Buffer): number | null {
   if (bytes[0] === STX) {
     if (bytes.includes(ETX)) {
       let candidateEtx = 0;
@@ -84,7 +84,7 @@ function findMessageInBuffer(bytes: Buffer): number | null {
  * @param {Buffer} bytes - The status response received from the device.
  * @return {Object} status - An object with the status values parsed.
  */
-function parseStatus(bytes: Buffer): Status {
+export function parseStatus(bytes: Buffer): Status {
   const sq = bytes[3];
   const status: Status = {
     mode: bytes[2],
@@ -127,10 +127,3 @@ interface Status {
   frequency: string;
   rxmode: number;
 }
-
-module.exports = {
-  bytesum: bytesum,
-  pack: pack,
-  findMessageInBuffer: findMessageInBuffer,
-  parseStatus: parseStatus,
-};
