@@ -1,4 +1,3 @@
-"use strict";
 var Util = require("../src/util");
 
 describe("bytesum()", () => {

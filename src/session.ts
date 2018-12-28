@@ -1,5 +1,3 @@
-"use strict";
-
 import constants from "./constants";
 var Lcd = require("./lcd");
 var Util = require("./util");

@@ -1,4 +1,3 @@
-"use strict";
 import RcpMessageParser from "../src/rcpMessageParser";
 
 describe("RcpMessageParser", () => {

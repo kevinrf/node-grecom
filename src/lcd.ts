@@ -1,5 +1,3 @@
-"use strict";
-
 /**
  * Represents the state of the device display.
  */

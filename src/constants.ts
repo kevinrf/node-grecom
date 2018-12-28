@@ -1,5 +1,3 @@
-"use strict";
-
 export default {
   command: {
     STATUS: "A".charCodeAt(0),

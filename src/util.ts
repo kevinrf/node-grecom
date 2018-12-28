@@ -1,4 +1,3 @@
-"use strict";
 /**
  * Utility functions.
  * @namespace Util

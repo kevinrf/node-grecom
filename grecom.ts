@@ -1,5 +1,3 @@
-"use strict";
-
 var constants = require("./src/constants");
 var serialPort = require("serialport");
 var Grecom = {constants: constants};

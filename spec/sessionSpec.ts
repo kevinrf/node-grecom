@@ -1,5 +1,3 @@
-"use strict";
-
 import Session from "../src/session";
 import constants from "../src/constants";
 
