@@ -12,12 +12,13 @@ export default class RcpMessageParser extends Transform {
     _transform(chunk: Buffer, encoding: string, callback: Function) {
         this.buffer = Buffer.concat([this.buffer, chunk]);
         while (true) {
-            const nextEtxIndex = findMessageInBuffer(this.buffer);
-            if (nextEtxIndex === null) { break; }
             const nextStxIndex = this.buffer.indexOf(0x02);
-            const message = this.buffer.slice(nextStxIndex, nextEtxIndex + 1);
+            if (nextStxIndex === -1) { break; }
+            const nextChecksumIndex = this.nextMessageInBuffer();
+            if (nextChecksumIndex === -1) { break; }
+            const message = this.buffer.slice(nextStxIndex, nextChecksumIndex);
             this.push(message);
-            this.buffer = this.buffer.slice(nextEtxIndex + 1);
+            this.buffer = this.buffer.slice(nextChecksumIndex);
         }
         callback();
     }
@@ -26,5 +27,10 @@ export default class RcpMessageParser extends Transform {
         this.push(this.buffer);
         this.buffer = Buffer.alloc(0);
         callback();
+    }
+
+    private nextMessageInBuffer(): number {
+        const nextEtxIndex = findMessageInBuffer(this.buffer);
+        return nextEtxIndex ? nextEtxIndex + 1 : -1;
     }
 }
