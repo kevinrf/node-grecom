@@ -9,216 +9,157 @@ describe("Session", () => {
     session = new Session(port);
   });
 
-  describe("#writeCommand", () => {
-    it("sends a request message for a command", () => {
-      spyOn(session.port, 'write');
-      session.writeCommand(0x41);
-      expect(session.port.write).toHaveBeenCalled();
-      expect(session.port.write.calls.argsFor(0)[0]).toEqual([0x02, 0x41, 0x03,
-        0x44]);
-    });
-
-    it("sends a request message for a command with message data", () => {
-      spyOn(session.port, 'write');
-      session.writeCommand(0x4B, 0x20);
-      expect(session.port.write.calls.argsFor(0)[0]).toEqual([0x02, 0x4B, 0x20,
-        0x03, 0x6E]);
-    });
-  });
-
   describe("#sendKey", () => {
-    it("writes a request with the send key command byte", () => {
-      spyOn(session, 'writeCommand');
-      let cmd = constants.command.SEND_KEY;
-      session.sendKey(constants.key.LIGHT);
-      expect(session.writeCommand).toHaveBeenCalled();
-      expect(session.writeCommand.calls.argsFor(0)[0]).toEqual(cmd);
+    let facade;
+    beforeEach(() => {
+      facade = jasmine.createSpyObj('SerialPortFacade', ['write']);
+      facade.write = async () => {};
+      facade.port = session.port;
     });
 
-    it("writes a request with the key value as payload", () => {
-      spyOn(session, 'writeCommand');
-      let key = constants.key.LIGHT;
-      session.sendKey(key);
-      expect(session.writeCommand).toHaveBeenCalled();
-      expect(session.writeCommand.calls.argsFor(0)[1]).toEqual(key);
-    });
-  });
-
-  describe("#getLcd", () => {
-    it("sends a get lcd command message", () => {
-      spyOn(session, 'writeCommand');
-      let cmd = constants.command.GET_LCD;
-      session.getLcd();
-      expect(session.writeCommand).toHaveBeenCalled();
-      expect(session.writeCommand.calls.argsFor(0)[0]).toEqual(cmd);
-    });
-
-    it("executes the callback when the lcd state is received", done => {
-      spyOn(session, 'writeCommand');
-      let bytes = Buffer.alloc(70);
-      bytes.fill(0x00);
-      bytes[0] = 2;
-      bytes[1] = constants.command.GET_LCD;
-      bytes[68] = 3;
-      bytes[69] = constants.command.GET_LCD + 3;
-      session.queueForResponse(constants.command.GET_LCD, () => done());
-      session.getLcd();
-      session._receiveData(bytes);
-    });
-  });
-
-  describe("#getStatus", () => {
-    it("sends a status command message", () => {
-      spyOn(session, 'writeCommand');
-      let cmd = constants.command.STATUS;
-      session.getStatus();
-      expect(session.writeCommand).toHaveBeenCalled();
-      expect(session.writeCommand.calls.argsFor(0)[0]).toEqual(cmd);
-    });
-
-    it("executes the callback when the device status is received", done => {
-      spyOn(session, 'writeCommand');
-      let data = [0x02, 0x41, 0x00, 0x00, 0xf4, 0x01, 0x42, 0x02, 0xb9, 0x01,
-        0x70, 0xdd, 0xb1, 0xf8, 0xad, 0xc9, 0x08, 0x01, 0x03, 0xac];
-      session.getStatus(() => done());
-      session._receiveData(Buffer.from(data));
-    });
-  });
-
-  describe("#queueForResponse", () => {
-    it("executes the callback when a matching response is received", done => {
-      session.queueForResponse(10, () => done());
-      session._handleResponse(Buffer.from([2, 10, 5, 5, 3, 23]));
+    it("writes a formatted message with the send key command and given key", async () => {
+      const subject = new Session(facade);
+      spyOn(facade, 'write');
+      await subject.sendKey(constants.key.LIGHT);
+      expect(facade.write).toHaveBeenCalled();
+      const expectedMessage = Buffer.from([0x02, 0x4b, 0x20, 0x03, 0x6e])
+      expect(facade.write.calls.argsFor(0)[0]).toEqual(expectedMessage);
     });
   });
 
   describe("#tune", () => {
-    it("sends a tune command message", () => {
-      spyOn(session, 'writeCommand');
-      let cmd = constants.command.TUNE;
-      session.tune("123.456", 0);
-      expect(session.writeCommand).toHaveBeenCalled();
-      expect(session.writeCommand.calls.argsFor(0)[0]).toEqual(cmd);
+    let facade;
+    beforeEach(() => {
+      facade = jasmine.createSpyObj('SerialPortFacade', ['write']);
+      facade.write = async () => { };
+      facade.port = session.port;
     });
 
-    it("sends the frequency as a 32-bit little-endian integer", () => {
-      spyOn(session, 'writeCommand');
-      session.tune("123.456", 1);
-      expect(session.writeCommand).toHaveBeenCalled();
-      let payload = session.writeCommand.calls.argsFor(0)[1];
-      expect(payload[0]).toEqual(0x00);
-      expect(payload[1]).toEqual(0xCA);
-      expect(payload[2]).toEqual(0x5B);
-      expect(payload[3]).toEqual(0x07);
+    it("sends a tune command message", async () => {
+      const subject = new Session(facade);
+      spyOn(facade, 'write');
+      const cmd = constants.command.TUNE;
+      const rxMode = 0;
+      await subject.tune("123.456", rxMode);
+      const sentMessage = facade.write.calls.argsFor(0)[0];
+      expect(sentMessage[0]).withContext("STX byte").toEqual(0x02);
+      expect(sentMessage[1]).withContext("Tune command byte").toEqual(cmd)
+      expect(sentMessage.slice(2, 6)).withContext("Frequency as 32-bit little-endian integer")
+        .toEqual(Buffer.from([0x00, 0xCA, 0x5B, 0x07]));
+      expect(sentMessage[6]).withContext("RX mode").toEqual(rxMode);
+      expect(sentMessage[7]).withContext("ETX byte").toEqual(0x03);
+      expect(sentMessage[8]).withContext("checksum").toEqual(0x83);
+    });
+  });
+
+  describe("#getLcd", () => {
+    let facade;
+
+    beforeEach(() => {
+      facade = jasmine.createSpyObj('SerialPortFacade', ['query']);
+      facade.query = async () => {};
+      facade.port = session.port;
+      let responseBytes = Buffer.alloc(70);
+      responseBytes.fill(0x00);
+      responseBytes[0] = 2;
+      responseBytes[1] = constants.command.GET_LCD;
+      responseBytes.write("Hello, world!   ", 2);
+      responseBytes[68] = 3;
+      responseBytes[69] = constants.command.GET_LCD + 3;
+      spyOn(facade, 'query').and.returnValue(Promise.resolve(responseBytes));
     });
 
-    it("sends the rxmode", () => {
-      spyOn(session, 'writeCommand');
-      var rxMode = 0;
-      session.tune("123.456", rxMode);
-      expect(session.writeCommand).toHaveBeenCalled();
-      expect(session.writeCommand.calls.argsFor(0)[1][4]).toEqual(rxMode);
+    it("sends a get lcd command message", async () => {
+      const subject = new Session(facade);
+      const cmd = constants.command.GET_LCD;
+      await subject.getLcd();
+      expect(facade.query).toHaveBeenCalled();
+      expect(facade.query.calls.argsFor(0)[0]).toEqual(Buffer.from([0x02, cmd, 0x03, 0x4f]));
+    });
+
+    it("returns an Lcd instance created from the response message", async () => {
+      const subject = new Session(facade);
+      const lcd = await subject.getLcd();
+      expect(lcd.row1).toEqual("Hello, world!   ");
+    });
+  });
+
+  describe("#getStatus", () => {
+    let facade;
+
+    beforeEach(() => {
+      facade = jasmine.createSpyObj('SerialPortFacade', ['query']);
+      facade.query = async () => {};
+      facade.port = session.port;
+      let responseBytes = Buffer.alloc(20);
+      responseBytes.fill(0x00);
+      responseBytes[0] = 2;
+      responseBytes.writeInt32LE(162400000, 13);
+      responseBytes[1] = constants.command.STATUS;
+      responseBytes[18] = 3;
+      responseBytes[19] = constants.command.GET_LCD + 3;
+      spyOn(facade, 'query').and.returnValue(Promise.resolve(responseBytes));
+    });
+
+    it("sends a status command message", async () => {
+      const subject = new Session(facade);
+      let cmd = constants.command.STATUS;
+      await subject.getStatus();
+      expect(facade.query).toHaveBeenCalled();
+      expect(facade.query.calls.argsFor(0)[0]).toEqual(Buffer.from([0x02, cmd, 0x03, 0x44]));
+    });
+
+    it("returns a Status object created from the response message", async () => {
+      const subject = new Session(facade);
+      const status = await subject.getStatus();
+      expect(status.frequency).toEqual("162.400");
     });
   });
 
   describe("#download", () => {
+    let facade;
+    const responseBytes = Buffer.alloc(67452);
+
     beforeEach(() => {
-      jasmine.clock().install();
-    });
-
-    afterEach(() => {
-      jasmine.clock().uninstall();
-    });
-
-    it("sends the download command", () => {
-      spyOn(session, 'writeCommand');
-      session.download();
-      expect(session.writeCommand).toHaveBeenCalled();
-      expect(session.writeCommand.calls.argsFor(0)).toEqual([0x43, 0x00]);
-    });
-
-    it("sends the transfer initiation byte after the download command", () => {
-      spyOn(session, 'writeCommand');
-      session.download();
-      let callCount = session.writeCommand.calls.count();
-      jasmine.clock().tick(501);
-      expect(session.writeCommand.calls.count()).toEqual(callCount + 1);
-      expect(session.writeCommand.calls.argsFor(2)).toEqual([0x45]);
-    });
-
-    it("calls the callback function after receiving 67452 bytes", done => {
-      spyOn(session, 'write');
-      session.download(data => {
-        expect(data.length).toEqual(67452);
-        done();
+      facade = jasmine.createSpyObj('SerialPortFacade', {
+        "writeAndWaitForBytes": Promise.resolve(responseBytes),
+        "write": Promise.resolve()
       });
-      jasmine.clock().tick(501);
-      session._receiveData(Buffer.alloc(67451));
-      session._receiveData(Buffer.alloc(1));
+      facade.port = session.port;
     });
 
-    it("resumes usual parsing of received data after the transfer", done => {
-      spyOn(session, 'write');
-      session.download();
-      jasmine.clock().tick(501);
-      session._receiveData(Buffer.alloc(67451));
-      session._receiveData(Buffer.alloc(1));
-      spyOn(session, 'writeCommand');
-      let nextData = [0x02, 0x41, 0x00, 0x00, 0xf4, 0x01, 0x42, 0x02, 0xb9,
-        0x01, 0x70, 0xdd, 0xb1, 0xf8, 0xad, 0xc9, 0x08, 0x01, 0x03, 0xac];
-      session.getStatus(() => done());
-      session._receiveData(Buffer.from(nextData));
+    it("sends the download command sequence and resolves with a Buffer containing the memory file", async () => {
+      const subject = new Session(facade);
+      const response = await subject.download();
+      expect(facade.write.calls.argsFor(0)[0]).withContext("first handshake sequence message")
+        .toEqual(Buffer.from([0x02, 0x43, 0x00, 0x03, 0x46]));
+      expect(facade.write.calls.argsFor(1)[0]).withContext("second handshake sequence message")
+        .toEqual(Buffer.from([0x02, 0x50, 0x01, 0x03, 0x54]));
+      expect(facade.writeAndWaitForBytes.calls.argsFor(0)[0]).withContext("initiate transfer signal")
+        .toEqual(Buffer.from([0x02, 0x45, 0x03, 0x48]));
+      expect(response).withContext("received file data").toEqual(responseBytes);
     });
   });
 
   describe("#upload", () => {
+    let facade;
+    const memoryFileBytes = Buffer.alloc(67452);
+
     beforeEach(() => {
-      jasmine.clock().install();
-    });
-
-    afterEach(() => {
-      jasmine.clock().uninstall();
-    });
-
-    it("sends the upload command", () => {
-      spyOn(session, 'writeCommand');
-      session.upload();
-      expect(session.writeCommand).toHaveBeenCalled();
-      expect(session.writeCommand.calls.argsFor(0)).toEqual([0x50, 0x03]);
-    });
-
-    it("waits for the transfer initiation byte before sending data", done => {
-      let requestReceived = false;
-      let transferInitiated = false;
-      let txInitiateStub = () => {
-        expect(session.write.calls.count()).toEqual(1);
-        transferInitiated = true;
-        session._receiveData(Buffer.from([0x45]));
-      };
-      spyOn(session, 'write').and.callFake(() => {
-        if (!requestReceived) {
-          requestReceived = true;
-          setTimeout(txInitiateStub, 100);
-          jasmine.clock().tick(101);
-        } else if (transferInitiated) {
-          done();
-        }
+      facade = jasmine.createSpyObj('SerialPortFacade', {
+        "write": Promise.resolve(),
+        "writeAndWaitForDelimiter": Promise.resolve(Buffer.from([0x45]))
       });
-      session.upload();
+      facade.port = session.port;
     });
 
-    it("calls the callback function when the transfer is over", done => {
-      session.port = jasmine.createSpyObj('port', ["write"]);
-      session.port.drain = jasmine.createSpy('drain').and.callFake(cb => {
-        if (cb) {
-          cb(null, 1);
-        }
-      });
-      session.port.write = jasmine.createSpy('write').and.callFake((b, cb) => {
-        cb(null, b.length);
-      });
-      session.upload(Buffer.alloc(67452), () => done());
-      session._receiveData(Buffer.from([0x45]));
+    it("performs the upload handshake and sends the file data to the port", async () => {
+      const subject = new Session(facade);
+      await subject.upload(memoryFileBytes);
+      expect(facade.writeAndWaitForDelimiter.calls.argsFor(0)).withContext("handshake")
+        .toEqual([Buffer.from([0x02, 0x50, 0x03, 0x03, 0x56]), [0x45]]);
+      expect(facade.write.calls.argsFor(0)[0]).withContext("memory file transfer")
+        .toEqual(memoryFileBytes);
     });
   });
 });

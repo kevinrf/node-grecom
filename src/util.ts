@@ -25,8 +25,8 @@ const ETX = 0x03;
  * @param {(number[]|Buffer)} bytes - The message.
  * @return {number} The byte sum value.
  */
-export function bytesum(bytes: Buffer): number {
-  let sum = bytes.slice(1).reduce((x, y) => x + y, 0);
+export function bytesum(bytes: any): number {
+  let sum = bytes.slice(1).reduce((x: number, y: number): number => x + y, 0);
   sum &= 0xFF;
   return sum;
 }
@@ -41,11 +41,11 @@ export function bytesum(bytes: Buffer): number {
  * @return {number[]} The enclosed bytes ready for transmission.
  */
 export function pack(bytes: number[]): number[] {
-  bytes.unshift(STX);
-  bytes.push(ETX);
-  let sum = bytesum(Buffer.from(bytes));
-  bytes.push(sum);
-  return bytes;
+  const packed = bytes.slice(0);
+  packed.unshift(STX);
+  packed.push(ETX);
+  packed.push(bytesum(packed));
+  return packed;
 }
 
 /**
@@ -101,13 +101,13 @@ export function parseStatus(bytes: Buffer): Status {
     ledR: bytes[10],
     ledG: bytes[11],
     ledB: bytes[12],
-    frequency: (bytes.readInt32LE(13) * 0.000001).toString(),
+    frequency: (bytes.readInt32LE(13) * 0.000001).toFixed(3),
     rxmode: bytes[17],
   };
   return status;
 }
 
-interface Status {
+export interface Status {
   mode: number;
   squelchRf: boolean;
   unmuted: boolean;

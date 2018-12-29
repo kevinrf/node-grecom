@@ -1,7 +1,7 @@
 /**
  * Represents the state of the device display.
  */
-export class Lcd {
+export default class Lcd {
   row1: string;
   row2: string;
   row3: string;
